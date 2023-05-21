@@ -40,4 +40,5 @@ class TripPresenter {
   }
 }
 
+
 export default TripPresenter;
