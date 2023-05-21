@@ -79,6 +79,10 @@ class TripEvent extends DefaultView {
   getTemplate() {
     return createTripEventTemplate(this.tripEvent);
   }
+
+  get editingButton() {
+    return this.getElement().querySelector('.event__rollup-btn');
+  }
 }
 
 export default TripEvent;

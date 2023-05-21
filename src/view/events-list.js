@@ -17,7 +17,7 @@ class TripEventsList extends DefaultView {
   addComponent(component) {
     const listElement = createElement(createElementWrapperTemplate());
     render(component, listElement);
-    this.getElement().append(listElement);
+    this.element.append(listElement);
   }
 }
 
