@@ -141,7 +141,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   `;
 };
 
-class TripEventsFormView extends DefaultView {
+class AddEventForm extends DefaultView {
   constructor(tripEvent) {
     super();
     this.tripEvent = tripEvent;
@@ -150,6 +150,10 @@ class TripEventsFormView extends DefaultView {
   getTemplate() {
     return createTripEventsFormTemplate(this.tripEvent);
   }
+
+  get saveButton() {
+    return this.element.querySelector('.event__save-btn');
+  }
 }
 
-export default TripEventsFormView;
+export default AddEventForm;
