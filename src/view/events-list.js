@@ -81,7 +81,7 @@ class TripEventsList extends AbstractView {
     this.tripEvents.push(component);
     if (this.isEmpty()) {
       this.removeElement();
-      const element = this.element;
+      this.element;
     } else {
       this._appendComponent(component);
     }

@@ -14,13 +14,12 @@ const generatePictures = () => {
   return pictures;
 };
 
-// fill Destinations
 const destinationNames = [
   'Amsterdam',
   'Geneva',
   'Chamonix',
 ];
-const destinations = {}; // {Destination.id: Destination}
+const destinations = {};
 destinationNames.forEach((name, index) => {
   const id = index + 1;
   const destination = {
@@ -33,7 +32,7 @@ destinationNames.forEach((name, index) => {
 });
 
 // fill Offers
-const offers = {}; // {Offer.id: Offer}
+const offers = {};
 const offersNumber = getRandomInt(5, 11);
 for (let id = 1; id < offersNumber + 1; ++id) {
   const offer = {
