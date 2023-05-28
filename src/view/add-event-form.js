@@ -1,10 +1,22 @@
 import dayjs from 'dayjs';
-import DefaultView from './default-view';
+import AbstractView from '../framework/view/abstract-view';
+import TripEvent from './trips-event';
 import { destinations, generateOffers, offers } from '../model/trip-event';
 import { TRIP_EVENT_TYPES } from '../const-data';
 import { capitalize } from '../util';
 
+const FormMode = {
+  NEW: 'NEW',
+  EDIT: 'EDIT',
+};
+
 const createTripEventsFormTemplate = (tripEvent = null) => {
+  let mode;
+  if (tripEvent) {
+    mode = FormMode.EDIT;
+  } else {
+    mode = FormMode.NEW;
+  }
   if (!tripEvent) {
     const date = dayjs().startOf('day').toISOString();
     const defaultType = 'flight;';
@@ -65,6 +77,21 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
       `)
     .join('');
 
+  const listControls = () => {
+    if (mode === FormMode.NEW) {
+      return `
+        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+        <button class="event__reset-btn" type="reset">Cancel</button>
+      `;
+    } else { // if (mode === FormMode.EDIT)
+      return `
+        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+        <button class="event__reset-btn" type="reset">Delete</button>
+        <button class="event__rollup-btn" type="button">
+      `;
+    }
+  };
+
   return `
     <form class="event event--edit" action="#" method="post">
       <header class="event__header">
@@ -114,9 +141,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
             type="text" name="event-price" value="${getPrice()}"
           >
         </div>
-
-        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Cancel</button>
+        ${listControls()}
       </header>
       <section class="event__details">
         <section class="event__section  event__section--offers">
@@ -141,18 +166,104 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   `;
 };
 
-class AddEventForm extends DefaultView {
-  constructor(tripEvent) {
+class AddEventForm extends AbstractView {
+  #tripEvent = null;
+  _mode = FormMode.NEW;
+  constructor(tripData) {
     super();
-    this.tripEvent = tripEvent;
+    this.tripData = tripData;
+    if (this.tripData) {
+      this._mode = FormMode.EDIT;
+    } else {
+      this._mode = FormMode.NEW;
+    }
+
+    // set listeners
+    this.setFormSubmitHandler(() => function () { return 0; });
+    if (this._mode === FormMode.NEW) {
+      this.setCancelButtonClickHandler(() => this.deleteForm());
+    } else { // if (this._mode === FormMode.EDIT)
+      this.setCancelButtonClickHandler(() => this.deleteTripEvent());
+      this.setArrowClickHandler(() => this.cancelForm());
+    }
+
+    document.addEventListener('keydown', (evt) => {
+      if (evt.key === 'Escape') {
+        if (this.isActive()) {
+          this.cancelForm();
+        }
+
+      }
+    });
   }
 
-  getTemplate() {
-    return createTripEventsFormTemplate(this.tripEvent);
+  get template() {
+    return createTripEventsFormTemplate(this.tripData);
   }
 
   get saveButton() {
     return this.element.querySelector('.event__save-btn');
+  }
+
+  get tripEvent() {
+    if (!this.#tripEvent) {
+      this.#tripEvent = new TripEvent(this.tripData);
+    }
+    return this.#tripEvent;
+  }
+
+  set tripEvent(newValue) {
+    this.#tripEvent = newValue;
+  }
+
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.formSubmit();
+  };
+
+  setFormSubmitHandler = (callback) => {
+    this._callback.formSubmit = callback;
+    this.element.addEventListener('submit', this.#formSubmitHandler);
+  };
+
+  #cancelButtonHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.cancelButtonClick();
+  };
+
+  setCancelButtonClickHandler = (callback) => {
+    this._callback.cancelButtonClick = callback;
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#cancelButtonHandler);
+  };
+
+  #arrowClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.arrowClick();
+  };
+
+  setArrowClickHandler = (callback) => {
+    this._callback.arrowClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#arrowClickHandler);
+  };
+
+  _closeForm() {
+    if (this.isActive()) {
+      this.element.replaceWith(this.tripEvent.element);
+    }
+  }
+
+  cancelForm() {
+    this._closeForm();
+    this.element.reset();
+  }
+
+  deleteForm() {
+    this.delete();
+  }
+
+  deleteTripEvent() {
+    this.#tripEvent.delete();
+    this.delete();
   }
 }
 

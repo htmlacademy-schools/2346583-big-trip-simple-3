@@ -1,4 +1,4 @@
-import DefaultView from './default-view';
+import AbstractView from '../framework/view/abstract-view';
 
 const createSortingTemplate = () => `
   <form class="trip-events__trip-sort  trip-sort" action="#" method="get">
@@ -25,8 +25,8 @@ const createSortingTemplate = () => `
   </form>
 `;
 
-class EventsSortingForm extends DefaultView {
-  getTemplate() {
+class EventsSortingForm extends AbstractView {
+  get template() {
     return createSortingTemplate();
   }
 }
