@@ -1,5 +1,5 @@
 import TripPresenter from './presenter/presenter';
-import { render } from './render';
+import { render } from './framework/render';
 import FiltersView from './view/filters-form';
 import TripModel from './model/trip-model';
 

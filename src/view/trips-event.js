@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
-import DefaultView from './default-view.js';
+import AbstractView from '../framework/view/abstract-view';
+import AddEventForm from './add-event-form.js';
 import { capitalize } from '../util.js';
 import { destinations, offers } from '../model/trip-event';
 
@@ -7,6 +8,7 @@ const createTripEventTemplate = (tripEvent) => {
   const dateFrom = dayjs(tripEvent.date_from);
   const dateTo = dayjs(tripEvent.date_to);
   const destination = destinations[tripEvent.destination];
+  const destinationName = destination.name;
 
   const getDateString = (date) => date.format('YYYY-MM-DD'); // Format to 'YYYY-MM-DD'
   const humanizeDayOfMonth = (date) => date.format('MMM D').toUpperCase(); // Format like 'MAR 3'
@@ -14,7 +16,7 @@ const createTripEventTemplate = (tripEvent) => {
   const humanizeTime = (date) => date.format('HH:mm'); // Format to 'HH:mm'
 
   const getTripTypeIconSrc = () => `img/icons/${tripEvent.type}.png`;
-  const getTripEventTitle = () => `${capitalize(tripEvent.type)} ${destination.name}`;
+  const getTripEventTitle = () => `${capitalize(tripEvent.type)} ${destinationName}`;
 
   const listActiveOffers = () => {
     let haveActive = false;
@@ -70,19 +72,42 @@ const createTripEventTemplate = (tripEvent) => {
   `;
 };
 
-class TripEvent extends DefaultView {
-  constructor(tripEvent) {
+class TripEvent extends AbstractView {
+  #form = null;
+
+  constructor(tripData) {
     super();
-    this.tripEvent = tripEvent;
+    this.tripData = tripData;
+    this.setArrowClickHandler(() => {
+      this.element.replaceWith(this.form.element);
+    });
   }
 
-  getTemplate() {
-    return createTripEventTemplate(this.tripEvent);
+  get template() {
+    return createTripEventTemplate(this.tripData);
   }
 
   get editingButton() {
     return this.getElement().querySelector('.event__rollup-btn');
   }
+
+  get form() {
+    if (!this.#form) {
+      this.#form = new AddEventForm(this.tripData);
+      this.#form.tripEvent = this;
+    }
+    return this.#form;
+  }
+
+  #arrowClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.arrowClick();
+  };
+
+  setArrowClickHandler = (callback) => {
+    this._callback.arrowClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#arrowClickHandler);
+  };
 }
 
 export default TripEvent;
