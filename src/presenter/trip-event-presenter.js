@@ -33,14 +33,12 @@ export default class TripEventPresenter {
     this.#eventComponent = new TripEvent(event);
     this.#eventEditorComponent = new AddEventForm(event);
 
-    this.#eventComponent.setEditClickListener(this.#replaceEventToForm);
+    this.#eventComponent.setArrowClickHandler(this.#replaceEventToForm);
 
     // нажатие на кнопку Save
-    this.#eventEditorComponent.setFormSubmitListener(this.#replaceFormToEvent); //handleFormSubmit
+    this.#eventEditorComponent.setFormSubmitHandler(this.#replaceFormToEvent); //handleFormSubmit
     // нажатие на стрелку, чтобы закрыть форму
-    this.#eventEditorComponent.setCloseButtonClickListener(this.#replaceFormToEvent);
-    // нажатие на кнопку Delete
-    this.#eventEditorComponent.setDeleteButtonClickListener(this.#removeElement);
+    this.#eventEditorComponent.setCancelButtonClickHandler(this.#replaceFormToEvent);
 
     if (prevEventComponent === null || prevEventEditorComponent === null) {
       render(this.#eventComponent, this.#container.element);
@@ -73,9 +71,9 @@ export default class TripEventPresenter {
     replace(this.#eventEditorComponent, this.#eventComponent);
   };
 
-  #handleFormSubmit = (task) => {
-    this.#changeData(task);
+  #handleFormSubmit = (tripEvent) => {
     this.#replaceFormToEvent();
+    this.#changeData(tripEvent);
   };
 
   destroy = () => {

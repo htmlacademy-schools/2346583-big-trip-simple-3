@@ -9,3 +9,8 @@ export const TRIP_EVENT_TYPES = [
   'sightseeing',
   'restaurant',
 ];
+
+export const SORT_TYPE = {
+  DAY: 'day',
+  PRICE: 'price',
+};

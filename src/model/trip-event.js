@@ -19,7 +19,7 @@ const destinationNames = [
   'Geneva',
   'Chamonix',
 ];
-const destinations = {};
+const DESTINATIONS = {};
 destinationNames.forEach((name, index) => {
   const id = index + 1;
   const destination = {
@@ -28,7 +28,7 @@ destinationNames.forEach((name, index) => {
     name,
     pictures: generatePictures(),
   };
-  destinations[id] = destination;
+  DESTINATIONS[id] = destination;
 });
 
 // fill Offers
@@ -43,7 +43,7 @@ for (let id = 1; id < offersNumber + 1; ++id) {
   offers[id] = offer;
 }
 
-const generateDestination = () => +getRandomElement(Object.keys(destinations));
+const generateDestination = () => +getRandomElement(Object.keys(DESTINATIONS));
 
 const generateTripType = () => getRandomElement(TRIP_EVENT_TYPES);
 
@@ -106,4 +106,4 @@ export const generateTripEvents = (tripsNumber) => {
   return trips;
 };
 
-export { destinations, offers };
+export { DESTINATIONS, offers };

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import AbstractView from '../framework/view/abstract-view';
 import TripEvent from './trips-event';
-import { destinations, generateOffers, offers } from '../model/trip-event';
+import { DESTINATIONS, generateOffers, offers } from '../model/trip-event';
 import { TRIP_EVENT_TYPES } from '../const-data';
 import { capitalize } from '../util';
 
@@ -25,14 +25,14 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
       basePrice: null,
       dateFrom: date,
       dateTo: date,
-      destination: Object.keys(destinations)[0],
+      destination: Object.keys(DESTINATIONS)[0],
       type: TRIP_EVENT_TYPES.includes(defaultType) ? defaultType : TRIP_EVENT_TYPES[0],
       offers: generateOffers(),
     };
   }
   const dateFrom = dayjs(tripEvent.date_from);
   const dateTo = dayjs(tripEvent.date_to);
-  const destination = destinations[tripEvent.destination];
+  const destination = DESTINATIONS[tripEvent.destination];
 
   const getTripTypeIconSrc = () => `img/icons/${tripEvent.type}.png`;
   const getDateTimeString = (date) => date.format('DD/MM/YY HH:mm');
@@ -49,7 +49,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
         </div>
       `)
     .join('');
-  const listDestinations = () => Object.values(destinations).map((d) => `
+  const listDestinations = () => Object.values(DESTINATIONS).map((d) => `
         <option value="${d.name}"></option>
       `)
     .join('');
@@ -226,14 +226,14 @@ class AddEventForm extends AbstractView {
     this.element.addEventListener('submit', this.#formSubmitHandler);
   };
 
-  #cancelButtonHandler = (evt) => {
+  cancelButtonHandler = (evt) => {
     evt.preventDefault();
     this._callback.cancelButtonClick();
   };
 
   setCancelButtonClickHandler = (callback) => {
     this._callback.cancelButtonClick = callback;
-    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#cancelButtonHandler);
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.cancelButtonHandler);
   };
 
   #arrowClickHandler = (evt) => {

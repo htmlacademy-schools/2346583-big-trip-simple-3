@@ -14,8 +14,8 @@ const createMessageTemplate = () => `
 `;
 
 class TripEventsList extends AbstractView {
-  #tripFiltersForm = document.querySelector('.trip-filters');
-  _filterValue = this.#tripFiltersForm.querySelector('input[name="trip-filter"]:checked').value;
+  tripFiltersForm = document.querySelector('.trip-filters');
+  _filterValue = this.tripFiltersForm.querySelector('input[name="trip-filter"]:checked').value;
 
   constructor(tripEvents) {
     super();
@@ -35,7 +35,7 @@ class TripEventsList extends AbstractView {
 
   setFiltersFormChangeHandler = (callback) => {
     this._callback.filtersFormChange = callback;
-    this.#tripFiltersForm.addEventListener('change', this.#filtersFormHandler);
+    this.tripFiltersForm.addEventListener('change', this.#filtersFormHandler);
   };
 
   initList() {

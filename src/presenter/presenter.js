@@ -1,12 +1,16 @@
-import { render } from '../framework/render';
+import { render, RenderPosition } from '../framework/render.js';
 import TripEventsList from '../view/events-list';
 import EventsSortingForm from '../view/events-sorting-form';
 import TripEvent from '../view/trips-event';
 import TripEventPresenter from './trip-event-presenter';
-import { updateItem } from '../util';
+import { updateItem, sortDays, sortPrices } from '../util.js';
+import { SORT_TYPE } from '../const-data.js';
 
 class TripPresenter {
-  init(container, tripModel) {
+
+  constructor(container, tripModel) {
+    this.tripEventPresenter = new Map();
+    this.eventSorter = new EventsSortingForm();
     this.container = container;
     this.tripModel = tripModel;
     this.tripEventsData = tripModel.tripEvents;
@@ -18,6 +22,21 @@ class TripPresenter {
       this.#renderEmptyList();
     }
   }
+
+  init() {
+    this.tripEvents = [...this.tripModel.tripEvents];
+    this.tripEvents.sort(sortDays);
+    this.#renderBoard();
+  }
+
+  #renderEventList = () => {
+    render(this.tripListComponent, this.container);
+    this.#renderEvents();
+  };
+
+  #renderEvents = () => {
+    this.tripEvents.forEach((task) => this.#renderEvent(task));
+  };
 
   #renderEmptyList = () => {
     this.tripListComponent.updateMessage();
@@ -41,6 +60,43 @@ class TripPresenter {
 
   #handleModeChange = () => {
     this.tripEventPresenter.forEach((presenter) => presenter.resetView());
+  };
+
+  #renderSort = () => {
+    render(this.eventSorter, this.container, RenderPosition.AFTERBEGIN);
+    this.eventSorter.setSortTypeChangeHandler(this.#handleSortTypeChange);
+  };
+
+  #handleSortTypeChange = (sortType) => {
+    if (this.currentSortType === sortType) {
+      return;
+    }
+
+    this.#sortEvents(sortType);
+    this.#clearEventList();
+    this.#renderEventList();
+  };
+
+  #sortEvents = (sortType) => {
+    switch (sortType) {
+      case SORT_TYPE.DAY:
+        this.tripEvents.sort(sortDays);
+        break;
+      case SORT_TYPE.PRICE:
+        this.tripEvents.sort(sortPrices);
+        break;
+    }
+
+    this.currentSortType = sortType;
+  };
+
+  #renderBoard = () => {
+    if (this.tripEvents.length === 0) {
+      this.#renderEmptyList();
+      return;
+    }
+    this.#renderSort();
+    this.#renderEventList();
   };
 }
 
