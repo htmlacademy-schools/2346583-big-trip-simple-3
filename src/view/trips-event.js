@@ -2,12 +2,12 @@ import dayjs from 'dayjs';
 import AbstractView from '../framework/view/abstract-view';
 import AddEventForm from './add-event-form.js';
 import { capitalize } from '../util.js';
-import { destinations, offers } from '../model/trip-event';
+import { DESTINATIONS, offers } from '../model/trip-event';
 
 const createTripEventTemplate = (tripEvent) => {
   const dateFrom = dayjs(tripEvent.date_from);
   const dateTo = dayjs(tripEvent.date_to);
-  const destination = destinations[tripEvent.destination];
+  const destination = DESTINATIONS[tripEvent.destination];
   const destinationName = destination.name;
 
   const getDateString = (date) => date.format('YYYY-MM-DD'); // Format to 'YYYY-MM-DD'
