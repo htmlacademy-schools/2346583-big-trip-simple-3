@@ -76,7 +76,7 @@ export const generateOffers = () => {
   const offersKeys = Object.keys(offers).map((value) => +value);
   const offerIds = sample(
     offersKeys,
-    getRandomInt(3, Math.min(5, offersKeys.length) + 1)
+    getRandomInt(0, Math.min(5, offersKeys.length) + 1)
   )
     .sort((a, b) => a - b);
   const result = {};

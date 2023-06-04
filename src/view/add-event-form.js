@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import AbstractView from '../framework/view/abstract-view';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import TripEvent from './trips-event';
 import { DESTINATIONS, generateOffers, offers } from '../model/trip-event';
 import { TRIP_EVENT_TYPES } from '../const-data';
@@ -166,27 +166,28 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   `;
 };
 
-class AddEventForm extends AbstractView {
+class AddEventForm extends AbstractStatefulView {
   #tripEvent = null;
   _mode = FormMode.NEW;
+  _state = null;
   constructor(tripData) {
     super();
     this.tripData = tripData;
+    this._state = AddEventForm.parseEventToState(tripData);
     if (this.tripData) {
       this._mode = FormMode.EDIT;
     } else {
       this._mode = FormMode.NEW;
     }
-
     // set listeners
-    this.setFormSubmitHandler(() => function () { return 0; });
+    this.setFormSubmitListener(() => function () { this._callback.formSubmit(AddEventForm.parseStateToEvent(this._state)); });
     if (this._mode === FormMode.NEW) {
       this.setCancelButtonClickHandler(() => this.deleteForm());
     } else { // if (this._mode === FormMode.EDIT)
       this.setCancelButtonClickHandler(() => this.deleteTripEvent());
       this.setArrowClickHandler(() => this.cancelForm());
     }
-
+    this.#setInnerHandlers();
     document.addEventListener('keydown', (evt) => {
       if (evt.key === 'Escape') {
         if (this.isActive()) {
@@ -218,10 +219,10 @@ class AddEventForm extends AbstractView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this._callback.formSubmit();
+    this._callback.formSubmit(AddEventForm.parseStateToEvent(this._state));
   };
 
-  setFormSubmitHandler = (callback) => {
+  setFormSubmitListener = (callback) => {
     this._callback.formSubmit = callback;
     this.element.addEventListener('submit', this.#formSubmitHandler);
   };
@@ -265,6 +266,121 @@ class AddEventForm extends AbstractView {
     this.#tripEvent.delete();
     this.delete();
   }
+
+  static parseEventToState = (event) => ({...event,
+    isDestination: event.destination !== null
+  });
+
+  static parseStateToEvent = (state) => {
+    const event = {...state};
+
+    if (!event.isDestination) {
+      event.destination = null;
+    }
+
+    delete event.isDestination;
+
+    return event;
+  };
+
+  #setInnerHandlers = () => {
+    this.element.querySelector('.event__type-list')
+      .addEventListener('change', this.#changeType);
+    this.element.querySelector('.event__input--destination')
+      .addEventListener('input', this.#changeDestination);
+    this.element.querySelector('.event__input--price')
+      .addEventListener('input', this.#changePrice);
+    this.element.querySelector('.event__available-offers')
+      .addEventListener('input', this.#changeOffers);
+
+    this.element.querySelector('#event-start-time-1')
+      .addEventListener('input', this.#changeDateFrom);
+    this.element.querySelector('#event-end-time-1')
+      .addEventListener('input', this.#changeDateTo);
+  };
+
+  _restoreHandlers = () => {
+    this.#setInnerHandlers();
+    this.setFormSubmitListener(this._callback.formSubmit);
+    this.setCloseButtonClickListener(this._callback.closeForm);
+    this.setDeleteButtonClickListener(this._callback.delete);
+  };
+
+  #changeDateTo = (evt) => {
+    evt.preventDefault();
+    const newDate = event.target.value;
+    this._setState({
+      dateTo: newDate, // не в том формате
+    });
+  };
+
+  #changeDateFrom = (evt) => {
+    evt.preventDefault();
+    const newDate = event.target.value;
+    this._setState({
+      dateFrom: newDate, // не в том формате
+    });
+  };
+
+  #changeType = (evt) => {
+    evt.preventDefault();
+    const fieldset = this.element.querySelector('.event__type-list');
+    const newType = fieldset.querySelector('input:checked').value;
+    this.updateElement({
+      type: newType,
+      offers: new Array(),
+    });
+  };
+
+  #changePrice = (evt) => {
+    evt.preventDefault();
+    const newPrice = event.target.value;
+    this._setState({
+      basePrice: newPrice,
+    });
+  };
+
+  #changeOffers = (evt) => {
+    evt.preventDefault();
+    const offersField = this.element.querySelector('.event__available-offers');
+    const checkboxes = offersField.querySelectorAll('.event__offer-checkbox:checked');
+
+    const checkedIds = new Array();
+
+    checkboxes.forEach((checkbox) => {
+      checkedIds.push(checkbox.id);
+    });
+
+    this._setState({
+      offers: checkedIds,
+    });
+  };
+
+  #changeDestination = (evt) => {
+    evt.preventDefault();
+    const newDestinationName = event.target.value;
+    let newDestination = null;
+    Object.values(DESTINATIONS).forEach((destination) => {
+      if (newDestinationName === destination.name) {
+        newDestination = destination;
+        this.updateElement({
+          destination: newDestination,
+          isDestination: true,
+        });
+      }
+    });
+
+    this._setState({
+      destination: {name: newDestinationName},
+      isDestination: false,
+    });
+  };
+
+  reset = (event) => {
+    this.updateElement(
+      AddEventForm.parseEventToState(event),
+    );
+  };
 }
 
 export default AddEventForm;

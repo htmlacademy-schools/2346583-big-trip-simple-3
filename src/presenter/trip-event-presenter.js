@@ -58,6 +58,7 @@ export default class TripEventPresenter {
   }
 
   #replaceFormToEvent = () => {
+    this.#eventEditorComponent.reset(this.#event);
     this.#eventEditorComponent.removeEscKeydownListener();
     this.#mode = Mode.DEFAULT;
     replace(this.#eventComponent, this.#eventEditorComponent);
@@ -83,6 +84,7 @@ export default class TripEventPresenter {
 
   resetView = () => {
     if (this.#mode !== Mode.DEFAULT) {
+      this.#eventEditorComponent.reset(this.#event);
       this.#replaceFormToEvent();
     }
   };
