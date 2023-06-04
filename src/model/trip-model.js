@@ -14,7 +14,7 @@ export default class TripModel extends Observable {
 
   async init() {
     try {
-      const events = await this.#eventsApiService.points;
+      const events = await this.#eventsApiService.events;
       this.#destinations = await this.#eventsApiService.destinations;
       this.#offers = await this.#eventsApiService.offers;
       this.#events = events.map(this.#adaptToClient);
@@ -40,7 +40,7 @@ export default class TripModel extends Observable {
     return this.#offers;
   }
 
-  updatePoint = async (type, update) => {
+  updateEvent = async (type, update) => {
     const index = this.#events.findIndex((event) => event.id === update.id);
 
     if (index === -1) {
@@ -48,7 +48,7 @@ export default class TripModel extends Observable {
     }
 
     try {
-      const response = await this.#eventsApiService.updatePoint(update);
+      const response = await this.#eventsApiService.updateEvent(update);
       const updatedEvent = this.#adaptToClient(response);
       this.#events = [
         ...this.#events.slice(0, index),
@@ -61,7 +61,7 @@ export default class TripModel extends Observable {
     }
   };
 
-  addPoint = (type, update) => {
+  addEvent = (type, update) => {
     this.#events = [
       update,
       ...this.#events,

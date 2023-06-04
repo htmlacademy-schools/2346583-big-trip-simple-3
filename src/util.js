@@ -38,8 +38,8 @@ const isDateFuture = (date) => {
 };
 
 const filter = {
-  [FILTER_TYPE.EVERYTHING]: (points) => points,
-  [FILTER_TYPE.FUTURE]: (points) => points.filter((point) => isDateFuture(point.dateTo)),
+  [FILTER_TYPE.EVERYTHING]: (events) => events,
+  [FILTER_TYPE.FUTURE]: (events) => events.filter((event) => isDateFuture(event.dateTo)),
 };
 
 const isFormValid = (state, availableDestinations) => {

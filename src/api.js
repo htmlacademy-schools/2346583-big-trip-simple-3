@@ -8,7 +8,7 @@ const Method = {
 };
 
 export default class EventsApi extends ApiService {
-  get points() {
+  get events() {
     return this._load({url: 'points'})
       .then(ApiService.parseResponse);
   }
@@ -23,11 +23,11 @@ export default class EventsApi extends ApiService {
       .then(ApiService.parseResponse);
   }
 
-  updatePoint = async (point) => {
+  updateEvent = async (event) => {
     const response = await this._load({
-      url: `points/${point.id}`,
+      url: `points/${event.id}`,
       method: Method.PUT,
-      body: JSON.stringify(this.#adaptToServer(point)),
+      body: JSON.stringify(this.#adaptToServer(event)),
       headers: new Headers({'Content-Type': 'application/json'}),
     });
 
@@ -36,11 +36,11 @@ export default class EventsApi extends ApiService {
     return parsedResponse;
   };
 
-  #adaptToServer = (point) => {
-    const adaptedPoint = {...point,
-      'base_price': point.basePrice,
-      'date_from': point.dateFrom instanceof Date ? point.dateFrom.toISOString() : null,
-      'date_to': point.dateTo instanceof Date ? point.dateTo.toISOString() : null
+  #adaptToServer = (event) => {
+    const adaptedPoint = {...event,
+      'base_price': event.basePrice,
+      'date_from': event.dateFrom instanceof Date ? event.dateFrom.toISOString() : null,
+      'date_to': event.dateTo instanceof Date ? event.dateTo.toISOString() : null
     };
 
     delete adaptedPoint.basePrice;

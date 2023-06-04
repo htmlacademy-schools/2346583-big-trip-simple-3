@@ -37,10 +37,10 @@ export default class TripEventPresenter {
     const prevEventComponent = this.#eventComponent;
     const prevEventEditorComponent = this.#eventEditorComponent;
 
-    this.#eventComponent = new TripEvent(event);
-    this.#eventEditorComponent = new AddEventForm(event);
+    this.#eventComponent = new TripEvent(this.#availableDestinations, this.#availableOffers, event);
+    this.#eventEditorComponent = new AddEventForm(this.#availableDestinations, this.#availableOffers, event);
 
-    this.#eventComponent.setArrowClickHandler(this.#replaceEventToForm);
+    this.#eventComponent.setEditClickListener(this.#replaceEventToForm);
     this.#eventEditorComponent.setFormSubmitListener(this.#handleFormSubmit);
     this.#eventEditorComponent.setCloseButtonClickListener(this.#replaceFormToEvent);
     this.#eventEditorComponent.setDeleteButtonClickListener(this.#handleDeleteClick);

@@ -47,7 +47,6 @@ class TripPresenter {
       case SORT_TYPE.PRICE:
         return filteredTasks.sort(sortPrices);
     }
-
     return filteredTasks;
   }
 
