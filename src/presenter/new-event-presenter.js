@@ -8,20 +8,24 @@ export default class NewEventPresenter {
   #changeData = null;
   #newEventForm = null;
   #destroyCallback = null;
+  #availableDestinations = null;
+  #availableOffers = null;
 
   constructor(eventListContainer, changeData) {
     this.#eventListContainer = eventListContainer;
     this.#changeData = changeData;
   }
 
-  init = (callback) => {
+  init = (callback, destinations = null, offers = null) => {
     this.#destroyCallback = callback;
+    this.#availableDestinations = destinations;
+    this.#availableOffers = offers;
 
     if (this.#newEventForm !== null) {
       return;
     }
 
-    this.#newEventForm = new AddEventForm();
+    this.#newEventForm = new AddEventForm(this.#availableDestinations, this.#availableOffers);
     this.#newEventForm.setFormSubmitListener(this.#handleFormSubmit);
     this.#newEventForm.setDeleteButtonClickListener(this.#handleDeleteClick);
 
