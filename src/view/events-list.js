@@ -8,11 +8,6 @@ const createEventsListTemplate = () => `
 const createElementWrapperTemplate = () => `
   <li class="trip-events__item"></li>
 `;
-
-const createMessageTemplate = () => `
-  <p class="trip-events__msg">Click New Event to create your first point</p>
-`;
-
 class TripEventsList extends AbstractView {
   tripFiltersForm = document.querySelector('.trip-filters');
   _filterValue = this.tripFiltersForm.querySelector('input[name="trip-filter"]:checked').value;
@@ -23,7 +18,6 @@ class TripEventsList extends AbstractView {
     this.setFiltersFormChangeHandler((evt) => {
       if (evt.target.name === 'trip-filter') {
         this.filterValue = evt.target.value;
-        this.updateMessage();
       }
     });
   }
@@ -43,8 +37,6 @@ class TripEventsList extends AbstractView {
       this.tripEvents.forEach((component) => {
         this._appendComponent(component);
       });
-    } else {
-      this.updateMessage();
     }
   }
 
@@ -53,28 +45,11 @@ class TripEventsList extends AbstractView {
   }
 
   get template() {
-    if (this.isEmpty()) {
-      return createMessageTemplate();
-    } else {
-      return createEventsListTemplate();
-    }
+    return createEventsListTemplate();
   }
 
   afterCreateElement() {
     this.initList();
-  }
-
-  updateMessage() {
-    if (this.isEmpty()) {
-      let newText = 'Click New Event to create your first point';
-      if (this._filterValue === 'future') {
-        newText = 'There are no future events now';
-      } else if (this._filterValue === 'past') {
-        newText = 'There are no past events now';
-      }
-
-      this.element.innerText = newText;
-    }
   }
 
   addComponent(component) {
@@ -95,3 +70,4 @@ class TripEventsList extends AbstractView {
 }
 
 export default TripEventsList;
+
