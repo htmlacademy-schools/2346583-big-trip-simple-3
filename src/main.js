@@ -6,7 +6,7 @@ import AddEventButton from './view/add-event-button.js';
 import { render } from './framework/render.js';
 import EventsApi from './api.js';
 
-const AUTHORIZATION = 'Basic hS2sfS44wcl1sa2j';
+const AUTHORIZATION = 'Basic AAAAfS44wcl1sa2j';
 const END_POINT = 'https://18.ecmascript.pages.academy/big-trip';
 
 const filtersSection = document.querySelector('.trip-controls__filters');
