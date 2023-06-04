@@ -47,18 +47,14 @@ export default class TripModel extends Observable {
       throw new Error('Can\'t update unexisting point');
     }
 
-    try {
-      const response = await this.#eventsApiService.updateEvent(update);
-      const updatedEvent = this.#adaptToClient(response);
-      this.#events = [
-        ...this.#events.slice(0, index),
-        updatedEvent,
-        ...this.#events.slice(index + 1),
-      ];
-      this._notify(type, updatedEvent);
-    } catch(err) {
-      throw new Error('Can\'t update task');
-    }
+    const response = await this.#eventsApiService.updateEvent(update);
+    const updatedEvent = this.#adaptToClient(response);
+    this.#events = [
+      ...this.#events.slice(0, index),
+      updatedEvent,
+      ...this.#events.slice(index + 1),
+    ];
+    this._notify(type, updatedEvent);
   };
 
   addEvent = (type, update) => {
