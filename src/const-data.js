@@ -15,6 +15,11 @@ export const SORT_TYPE = {
   PRICE: 'price',
 };
 
+export const FILTER_TYPE = {
+  EVERYTHING: 'everything',
+  FUTURE: 'future',
+};
+
 export const UserAction = {
   UPDATE_POINT: 'UPDATE_POINT',
   ADD_POINT: 'ADD_POINT',

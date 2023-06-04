@@ -6,7 +6,6 @@ const createEmptyListTemplate = (filter) => {
   }
   return '<p class="trip-events__msg">There are no future events now</p>';
 };
-
 class EmptyListView extends AbstractView {
   #currentFilter;
 
