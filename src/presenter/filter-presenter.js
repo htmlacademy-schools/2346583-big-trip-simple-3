@@ -25,7 +25,6 @@ export default class FilterPresenter {
     this.#filterComponent.setFilterChangeListener(this.#handleFilterChange);
 
     if (prevFilterComponent === null) {
-      console.log('sfsdfsfd');
       render(this.#filterComponent, this.#filterContainer);
       return;
     }
