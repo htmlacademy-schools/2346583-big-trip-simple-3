@@ -8,3 +8,4 @@ const tripEventsSection = document.querySelector('.trip-events');
 const tripModel = new TripModel();
 render(new FiltersView(), tripFiltersBlock);
 const tripPresenter = new TripPresenter(tripEventsSection, tripModel);
+tripPresenter.init();

@@ -1,6 +1,7 @@
 import { render, replace, remove } from '../framework/render.js';
 import AddEventForm from '../view/add-event-form.js';
 import TripEvent from '../view/trips-event.js';
+import { UserAction, UpdateType } from '../const-data.js';
 
 const Mode = {
   DEFAULT: 'DEFAULT',
@@ -36,9 +37,10 @@ export default class TripEventPresenter {
     this.#eventComponent.setArrowClickHandler(this.#replaceEventToForm);
 
     // нажатие на кнопку Save
-    this.#eventEditorComponent.setFormSubmitHandler(this.#replaceFormToEvent); //handleFormSubmit
+    this.#eventEditorComponent.setFormSubmitListener(this.#replaceFormToEvent);
     // нажатие на стрелку, чтобы закрыть форму
-    this.#eventEditorComponent.setCancelButtonClickHandler(this.#replaceFormToEvent);
+    this.#eventEditorComponent.setCloseButtonClickListener(this.#replaceFormToEvent);
+    this.#eventEditorComponent.setDeleteButtonClickListener(this.#handleDeleteClick);
 
     if (prevEventComponent === null || prevEventEditorComponent === null) {
       render(this.#eventComponent, this.#container.element);
@@ -92,5 +94,10 @@ export default class TripEventPresenter {
   #removeElement = () => {
     this.#eventEditorComponent.removeEscKeydownListener();
     this.destroy();
+  };
+
+  #handleDeleteClick = (point) => {
+    this.#eventEditorComponent.removeEscKeydownListener();
+    this.#changeData();
   };
 }

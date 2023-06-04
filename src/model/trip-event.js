@@ -14,7 +14,7 @@ const generatePictures = () => {
   return pictures;
 };
 
-const destinationNames = [
+export const destinationNames = [
   'Amsterdam',
   'Geneva',
   'Chamonix',
@@ -32,18 +32,19 @@ destinationNames.forEach((name, index) => {
 });
 
 // fill Offers
-const offers = {};
-const offersNumber = getRandomInt(5, 11);
+const eventOffers = {};
+export const offersNumber = getRandomInt(5, 11);
 for (let id = 1; id < offersNumber + 1; ++id) {
   const offer = {
     id,
     title: `Offer ${id}`,
     price: getRandomInt(10, 81),
   };
-  offers[id] = offer;
+  eventOffers[id] = offer;
 }
 
-const generateDestination = () => +getRandomElement(Object.keys(DESTINATIONS));
+
+const generateDestination = () => getRandomElement(Object.keys(DESTINATIONS));
 
 const generateTripType = () => getRandomElement(TRIP_EVENT_TYPES);
 
@@ -73,7 +74,7 @@ const generateDate = (initialDate = undefined) => {
 };
 
 export const generateOffers = () => {
-  const offersKeys = Object.keys(offers).map((value) => +value);
+  const offersKeys = Object.keys(eventOffers).map((value) => +value);
   const offerIds = sample(
     offersKeys,
     getRandomInt(0, Math.min(5, offersKeys.length) + 1)
@@ -106,4 +107,4 @@ export const generateTripEvents = (tripsNumber) => {
   return trips;
 };
 
-export { DESTINATIONS, offers };
+export { DESTINATIONS, eventOffers };

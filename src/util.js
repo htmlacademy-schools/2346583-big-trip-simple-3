@@ -12,6 +12,7 @@ export function getTrueWithChance(chance = 0.5) {
   // Gets true with given chance. chance is float between 0 and 1
   return Math.random() < chance;
 }
+export const getFullDataTime = (date) => dayjs(date).format('DD/MM/YY HH:mm');
 
 export function getLoremIpsum(wordsNumber) {
   // Get lorem ipsum text with given words number

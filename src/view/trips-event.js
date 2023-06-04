@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import AbstractView from '../framework/view/abstract-view';
 import AddEventForm from './add-event-form.js';
 import { capitalize } from '../util.js';
-import { DESTINATIONS, offers } from '../model/trip-event';
+import { DESTINATIONS, eventOffers } from '../model/trip-event';
 
 const createTripEventTemplate = (tripEvent) => {
   const dateFrom = dayjs(tripEvent.date_from);
@@ -23,7 +23,7 @@ const createTripEventTemplate = (tripEvent) => {
     const resultList = [];
     for (const [offerId, isActive] of Object.entries(tripEvent.offers)) {
       if (isActive) {
-        const offer = offers[offerId];
+        const offer = eventOffers[offerId];
         resultList.push(`
           <li class="event__offer">
             <span class="event__offer-title">${offer.title}</span>
