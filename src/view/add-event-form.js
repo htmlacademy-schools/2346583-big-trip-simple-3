@@ -1,8 +1,19 @@
-import { getFullDataTime } from '../util.js';
+import { getFullDataTime, isFormValid } from '../util.js';
 import { eventOffers, destinationNames, DESTINATIONS } from '../model/trip-event.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import dayjs from 'dayjs';
+
+
+const EVENT_TEMPLATE = {
+  type: 'flight',
+  dateFrom: dayjs().toISOString(),
+  dateTo: dayjs().toISOString(),
+  basePrice: '',
+  offers: new Array(),
+  destination: null,
+};
 
 const createDestinationTemplate = (destination) => {
   const {description, pictures} = DESTINATIONS[destination];
@@ -87,7 +98,7 @@ const createDestinationListTemplate = () => {
   return template;
 };
 
-const createEventEditorTemplate = (data) => {
+const createEventEditorTemplate = (data, isEventNew) => {
   const {dateFrom, dateTo, offers, type, destination, basePrice, isDestination} = data;
 
   const tripDateFrom = dateFrom !== null
@@ -107,6 +118,17 @@ const createEventEditorTemplate = (data) => {
     : '';
 
   const offersTemplate = createOffersTemplate(type, offers);
+
+  const buttonsTemplate = isEventNew
+    ? `
+    <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+      <button class="event__reset-btn" type="reset">Cancel</button>`
+    : `
+    <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+      <button class="event__reset-btn" type="reset">Delete</button>
+      <button class="event__rollup-btn" type="button">
+        <span class="visually-hidden">Open event</span>
+      </button>`;
 
   return `
 <li class="trip-events__item">
@@ -150,14 +172,10 @@ const createEventEditorTemplate = (data) => {
           <span class="visually-hidden">Price</span>
           &euro;
         </label>
-        <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}">
+        <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}" pattern="[0-9]*">
       </div>
 
-      <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-      <button class="event__reset-btn" type="reset">Delete</button>
-      <button class="event__rollup-btn" type="button">
-        <span class="visually-hidden">Open event</span>
-      </button>
+      ${buttonsTemplate}
     </header>
     <section class="event__details">
       ${offersTemplate}
@@ -170,10 +188,12 @@ const createEventEditorTemplate = (data) => {
 
 class AddEventForm extends AbstractStatefulView {
   _state = null;
-  #datepicker = null;
+  #datepicker = {};
+  #isEventNew = false;
 
-  constructor(event) {
+  constructor(event = EVENT_TEMPLATE) {
     super();
+    this.#isEventNew = (event === EVENT_TEMPLATE);
     this._state = AddEventForm.parseEventToState(event);
     this.#setInnerHandlers();
     this.#setDateToPicker();
@@ -197,7 +217,7 @@ class AddEventForm extends AbstractStatefulView {
   };
 
   get template() {
-    return createEventEditorTemplate(this._state);
+    return createEventEditorTemplate(this._state, this.#isEventNew);
   }
 
   #setInnerHandlers = () => {
@@ -227,8 +247,8 @@ class AddEventForm extends AbstractStatefulView {
   };
 
   #setDateToPicker = () => {
-    this.#datepicker = flatpickr(
-      this.element.querySelector('[name="event-start-time"]'),
+    const dateToPickr = flatpickr(
+      this.element.querySelector('[name="event-end-time"]'),
       {
         enableTime: true,
         dateFormat: 'Y/m/d H:i',
@@ -236,6 +256,7 @@ class AddEventForm extends AbstractStatefulView {
         onChange: this.#changeDateTo,
       },
     );
+    this.#datepicker.dateTo = dateToPickr;
   };
 
   #changeDateFrom = ([userDate]) => {
@@ -245,8 +266,8 @@ class AddEventForm extends AbstractStatefulView {
   };
 
   #setDateFromPicker = () => {
-    this.#datepicker = flatpickr(
-      this.element.querySelector('[name="event-end-time"]'),
+    const dateFromPickr = flatpickr(
+      this.element.querySelector('[name="event-start-time"]'),
       {
         enableTime: true,
         dateFormat: 'Y/m/d H:i',
@@ -254,6 +275,7 @@ class AddEventForm extends AbstractStatefulView {
         onChange: this.#changeDateFrom,
       },
     );
+    this.#datepicker.dateFrom = dateFromPickr;
   };
 
   #changeType = (evt) => {
@@ -293,26 +315,27 @@ class AddEventForm extends AbstractStatefulView {
   #changeDestination = (evt) => {
     evt.preventDefault();
     const newDestinationName = event.target.value;
-    let newDestination = null;
+    let isNewDestination = false;
     Object.values(DESTINATIONS).forEach((destination) => {
       if (newDestinationName === destination.name) {
-        newDestination = destination;
+        isNewDestination = true;
         this.updateElement({
-          destination: newDestination,
+          destination,
           isDestination: true,
         });
       }
     });
-
-    this._setState({
-      destination: {name: newDestinationName},
-      isDestination: false,
-    });
+    if (!isNewDestination) {
+      this._setState({
+        destination: null,
+        isDestination: false,
+      });
+    }
   };
 
   setCloseButtonClickListener = (callback) => {
     this._callback.closeForm = callback;
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#closeButtonClickHandler);
+    this.element.querySelector('.event__rollup-btn')?.addEventListener('click', this.#closeButtonClickHandler);
   };
 
   #closeButtonClickHandler = (evt) => {
@@ -322,7 +345,10 @@ class AddEventForm extends AbstractStatefulView {
 
   setFormSubmitListener = (callback) => {
     this._callback.formSubmit = callback;
-    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
+    const newState = AddEventForm.parseStateToEvent(this._state);
+    if (isFormValid(newState)) {
+      this._callback.formSubmit(newState);
+    }
   };
 
   #formSubmitHandler = (evt) => {
@@ -337,7 +363,7 @@ class AddEventForm extends AbstractStatefulView {
 
   #deleteButtonClickHandler = (evt) => {
     evt.preventDefault();
-    this._callback.delete();
+    this._callback.delete(AddEventForm.parseStateToEvent(this._state));
   };
 
   setEscKeydownListener = (callback) => {
@@ -365,9 +391,12 @@ class AddEventForm extends AbstractStatefulView {
   removeElement = () => {
     super.removeElement();
 
-    if (this.#datepicker) {
-      this.#datepicker.destroy();
-      this.#datepicker = null;
+    if (this.#datepicker.dateTo) {
+      this.#datepicker.dateTo.destroy();
+      this.#datepicker.dateTo = null;
+
+      this.#datepicker.dateFrom.destroy();
+      this.#datepicker.dateFrom = null;
     }
   };
 }

@@ -48,10 +48,8 @@ const generateDestination = () => getRandomElement(Object.keys(DESTINATIONS));
 
 const generateTripType = () => getRandomElement(TRIP_EVENT_TYPES);
 
-const generateDate = (initialDate = undefined) => {
-  if (typeof initialDate === 'undefined') {
-    initialDate = dayjs();
-  }
+const generateDate = () => {
+  let initialDate = dayjs();
   initialDate = initialDate.startOf('minute');
 
   // offset from initialDate
@@ -68,8 +66,8 @@ const generateDate = (initialDate = undefined) => {
   const dateFrom = initialDate.add(minutesOffset, 'minute');
   const dateTo = dateFrom.add(minutesDuration, 'minute');
   return {
-    from: dateFrom,
-    to: dateTo,
+    from: dateFrom.toISOString(),
+    to: dateTo.toISOString(),
   };
 };
 
@@ -88,16 +86,14 @@ export const generateOffers = () => {
 };
 
 export const generateTripEvents = (tripsNumber) => {
-  let initialDate = dayjs();
   const trips = new Array(tripsNumber);
   for (let i = 0; i < tripsNumber; ++i) {
-    const { from, to } = generateDate(initialDate);
-    initialDate = to;
+    const { from, to } = generateDate();
     const trip = {
       id: i + 1,
       price: getRandomInt(50, 2000),
-      dateFrom: from.toISOString(),
-      dateTo: to.toISOString(),
+      dateFrom: from,
+      dateTo: to,
       destination: generateDestination(),
       offers: generateOffers(),
       type: generateTripType(),
