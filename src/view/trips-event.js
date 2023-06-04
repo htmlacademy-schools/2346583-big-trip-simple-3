@@ -1,113 +1,101 @@
-import dayjs from 'dayjs';
-import AbstractView from '../framework/view/abstract-view';
-import AddEventForm from './add-event-form.js';
-import { capitalize } from '../util.js';
-import { DESTINATIONS, eventOffers } from '../model/trip-event';
+import { getDate, getTime } from '../util.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
-const createTripEventTemplate = (tripEvent) => {
-  const dateFrom = dayjs(tripEvent.date_from);
-  const dateTo = dayjs(tripEvent.date_to);
-  const destination = DESTINATIONS[tripEvent.destination];
-  const destinationName = destination.name;
-
-  const getDateString = (date) => date.format('YYYY-MM-DD'); // Format to 'YYYY-MM-DD'
-  const humanizeDayOfMonth = (date) => date.format('MMM D').toUpperCase(); // Format like 'MAR 3'
-  const getDateTimeString = (date) => date.format('YYYY-MM-DDTHH:mm'); // Format to 'YYYY-MM-DDTHH:mm'
-  const humanizeTime = (date) => date.format('HH:mm'); // Format to 'HH:mm'
-
-  const getTripTypeIconSrc = () => `img/icons/${tripEvent.type}.png`;
-  const getTripEventTitle = () => `${capitalize(tripEvent.type)} ${destinationName}`;
-
-  const listActiveOffers = () => {
-    let haveActive = false;
-    const resultList = [];
-    for (const [offerId, isActive] of Object.entries(tripEvent.offers)) {
-      if (isActive) {
-        const offer = eventOffers[offerId];
-        resultList.push(`
-          <li class="event__offer">
-            <span class="event__offer-title">${offer.title}</span>
-            &plus;&euro;&nbsp;
-            <span class="event__offer-price">${offer.price}</span>
-          </li>
-        `);
-        haveActive = true;
-      }
+const createOffersTemplate = (type, offers, availableOffers) => {
+  let template = '';
+  const allOffers = Object.values(availableOffers);
+  allOffers.forEach(({type: eventType, offers: typeOffers}) => {
+    if (type === eventType) {
+      typeOffers.forEach(({id, title, price}) => {
+        if (offers.includes(id)) {
+          template += `
+            <li class="event__offer">
+              <span class="event__offer-title">${title}</span>
+              &plus;&euro;&nbsp;
+              <span class="event__offer-price">${price}</span>
+            </li>
+            `;
+        }
+      });
     }
-    if (haveActive) {
-      return resultList.join('');
-    }
-    return `
-      <li class="event__offer">
-        <span class="event__offer-title">No additional offers</span>
-      </li>
-    `;
-  };
+  });
+
+  return template;
+};
+
+const createTripPointTemplate = (tripInfo, availableDestinations, availableOffers) => {
+  const {dateFrom, dateTo, offers, type, destination, basePrice} = tripInfo;
+
+  const tripDate = dateFrom !== null
+    ? getDate(dateFrom)
+    : 'No data';
+
+  const tripTimeFrom = dateFrom !== null
+    ? getTime(dateFrom)
+    : 'No time';
+
+  const tripTimeTo = dateTo !== null
+    ? getTime(dateTo)
+    : 'No time';
+
+  const destinationName = destination !== null
+    ? availableDestinations[destination - 1].name
+    : 'No destination';
 
   return `
+  <li class="trip-events__item">
     <div class="event">
-      <time class="event__date" datetime="${getDateString(dateFrom)}">${humanizeDayOfMonth(dateFrom)}</time>
+      <time class="event__date" datetime="2019-03-18">${tripDate}</time>
       <div class="event__type">
-        <img class="event__type-icon" width="42" height="42" src="${getTripTypeIconSrc()}" alt="Event type icon">
+        <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
       </div>
-      <h3 class="event__title">${getTripEventTitle()}</h3>
+      <h3 class="event__title">${type} ${destinationName}</h3>
       <div class="event__schedule">
         <p class="event__time">
-          <time class="event__start-time" datetime="${getDateTimeString(dateFrom)}">${humanizeTime(dateFrom)}</time>
+          <time class="event__start-time" datetime="2019-03-18T10:30">${tripTimeFrom}</time>
           &mdash;
-          <time class="event__end-time" datetime="${getDateTimeString(dateTo)}">${humanizeTime(dateTo)}</time>
+          <time class="event__end-time" datetime="2019-03-18T11:00">${tripTimeTo}</time>
         </p>
       </div>
       <p class="event__price">
-        &euro;&nbsp;<span class="event__price-value">${tripEvent.base_price}</span>
+        &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
       </p>
       <h4 class="visually-hidden">Offers:</h4>
       <ul class="event__selected-offers">
-        ${listActiveOffers()}
+        ${createOffersTemplate(type, offers, availableOffers)}
       </ul>
       <button class="event__rollup-btn" type="button">
         <span class="visually-hidden">Open event</span>
       </button>
     </div>
+  </li>
   `;
 };
 
-class TripEvent extends AbstractView {
-  #form = null;
+export default class tripEvent extends AbstractView {
+  #event = null;
+  #availableDestinations = null;
+  #availableOffers = null;
 
-  constructor(tripData) {
+  constructor(destinations, offers, event) {
     super();
-    this.tripData = tripData;
-    this.setArrowClickHandler(() => {
-      this.element.replaceWith(this.form.element);
-    });
+    this.#availableDestinations = destinations;
+    this.#availableOffers = offers;
+
+    this.#event = event;
   }
 
   get template() {
-    return createTripEventTemplate(this.tripData);
+    return createTripPointTemplate(this.#event, this.#availableDestinations, this.#availableOffers);
   }
 
-  get editingButton() {
-    return this.getElement().querySelector('.event__rollup-btn');
-  }
-
-  get form() {
-    if (!this.#form) {
-      this.#form = new AddEventForm(this.tripData);
-      this.#form.tripEvent = this;
-    }
-    return this.#form;
-  }
-
-  #arrowClickHandler = (evt) => {
-    evt.preventDefault();
-    this._callback.arrowClick();
+  setEditClickListener = (callback) => {
+    this._callback.openEditor = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
   };
 
-  setArrowClickHandler = (callback) => {
-    this._callback.arrowClick = callback;
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#arrowClickHandler);
+  #editClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.openEditor();
   };
 }
-
-export default TripEvent;

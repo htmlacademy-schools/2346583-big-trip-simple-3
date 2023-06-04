@@ -5,6 +5,7 @@ import EmptyListView from '../view/empty-list.js';
 import TripEventPresenter from './trip-event-presenter.js';
 import NewEventPresenter from './new-event-presenter.js';
 import { filter, sortDays, sortPrices } from '../util.js';
+import LoadingView from '../view/loading.js';
 import { SORT_TYPE, UpdateType, UserAction, FILTER_TYPE } from '../const-data.js';
 
 class TripPresenter {
@@ -14,20 +15,21 @@ class TripPresenter {
   #tripEventPresenter = new Map();
   #container = null;
   #newEventPresenter = null;
-  #tripEventsModel = null;
+  #tripModel = null;
   #filterModel = null;
-
+  #loadingComponent = new LoadingView();
+  #isLoading = true;
   #filterType = FILTER_TYPE.EVERYTHING;
   #sortType = SORT_TYPE.DAY;
 
-  constructor (container, tripEventsModel, filterModel) {
+  constructor (container, tripModel, filterModel) {
     this.#container = container;
-    this.#tripEventsModel = tripEventsModel;
+    this.#tripModel = tripModel;
     this.#filterModel = filterModel;
 
     this.#newEventPresenter = new NewEventPresenter(this.#tripEventsList.element, this.#handleViewAction);
 
-    this.#tripEventsModel.addObserver(this.#handleModelEvent);
+    this.#tripModel.addObserver(this.#handleModelEvent);
     this.#filterModel.addObserver(this.#handleModelEvent);
   }
 
@@ -37,9 +39,8 @@ class TripPresenter {
 
   get events() {
     this.#filterType = this.#filterModel.filter;
-    const events = this.#tripEventsModel.events;
+    const events = this.#tripModel.events;
     const filteredTasks = filter[this.#filterType](events);
-
     switch (this.#sortType) {
       case SORT_TYPE.DAY:
         return filteredTasks.sort(sortDays);
@@ -53,7 +54,7 @@ class TripPresenter {
   createTask = (callback) => {
     this.#sortType = SORT_TYPE.DAY;
     this.#filterModel.setFilter(UpdateType.MAJOR, FILTER_TYPE.EVERYTHING);
-    this.#newEventPresenter.init(callback);
+    this.#newEventPresenter.init(callback, this.#tripModel.destinations, this.#tripModel.offers);
   };
 
   #renderEmptyList = () => {
@@ -62,7 +63,9 @@ class TripPresenter {
   };
 
   #renderEvent = (task) => {
-    const tripEventPresenter = new TripEventPresenter(this.#tripEventsList, this.#handleViewAction, this.#handleModeChange);
+    const destinations = this.#tripModel.destinations;
+    const offers = this.#tripModel.offers;
+    const tripEventPresenter = new TripEventPresenter(this.#tripEventsList, this.#handleViewAction, this.#handleModeChange, destinations, offers);
     tripEventPresenter.init(task);
     this.#tripEventPresenter.set(task.id, tripEventPresenter);
   };
@@ -71,12 +74,18 @@ class TripPresenter {
     this.events.forEach((task) => this.#renderEvent(task));
   };
 
+  #renderLoading = () => {
+    render(this.#loadingComponent, this.#tripEventsList.element, RenderPosition.AFTERBEGIN);
+  };
+
   #clearEventList = ({resetSortType = false} = {}) => {
     this.#newEventPresenter.destroy();
     this.#tripEventPresenter.forEach((presenter) => presenter.destroy());
     this.#tripEventPresenter.clear();
 
     remove(this.#eventSorter);
+    remove(this.#loadingComponent);
+
     if (this.#emptyListComponent) {
       remove(this.#emptyListComponent);
     }
@@ -89,13 +98,13 @@ class TripPresenter {
   #handleViewAction = (actionType, updateType, update) => {
     switch (actionType) {
       case UserAction.UPDATE_TASK:
-        this.#tripEventsModel.updateEvent(updateType, update);
+        this.#tripModel.updateEvent(updateType, update);
         break;
       case UserAction.ADD_TASK:
-        this.#tripEventsModel.addEvent(updateType, update);
+        this.#tripModel.addEvent(updateType, update);
         break;
       case UserAction.DELETE_TASK:
-        this.#tripEventsModel.deleteEvent(updateType, update);
+        this.#tripModel.deleteEvent(updateType, update);
         break;
     }
   };
@@ -113,6 +122,9 @@ class TripPresenter {
         this.#clearEventList({resetSortType: true});
         this.#renderBoard();
         break;
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        remove(this.#loadingComponent);
     }
   };
 
@@ -139,6 +151,12 @@ class TripPresenter {
   };
 
   #renderBoard = () => {
+    render(this.#tripEventsList, this.#container);
+
+    if (this.#isLoading) {
+      this.#renderLoading();
+      return;
+    }
     const events = this.events;
     const eventCount = events.length;
     if (eventCount === 0) {
@@ -147,7 +165,6 @@ class TripPresenter {
     }
     this.#renderSort();
 
-    render(this.#tripEventsList, this.#container);
     this.#renderEvents();
   };
 }

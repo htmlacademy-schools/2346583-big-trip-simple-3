@@ -1,22 +1,20 @@
 import { getFullDataTime, isFormValid } from '../util.js';
-import { eventOffers, destinationNames, DESTINATIONS } from '../model/trip-event.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
-import dayjs from 'dayjs';
 
 
 const EVENT_TEMPLATE = {
   type: 'flight',
-  dateFrom: dayjs().toISOString(),
-  dateTo: dayjs().toISOString(),
+  dateFrom: new Date(),
+  dateTo: new Date(),
   basePrice: '',
   offers: new Array(),
   destination: null,
 };
 
-const createDestinationTemplate = (destination) => {
-  const {description, pictures} = DESTINATIONS[destination];
+const createDestinationTemplate = (destination, availableDestinations) => {
+  const {description, pictures} = availableDestinations[destination - 1];
 
   let picturesSection = '';
   pictures.forEach(({src, description: photoDescription}) => {
@@ -37,32 +35,26 @@ const createDestinationTemplate = (destination) => {
   ` : '';
 };
 
-const createOffersTemplate = (offers) => {
+const createOffersTemplate = (type, offers, availableOffers) => {
   let template = '';
-  const allOffers = eventOffers;
-  Object.values(allOffers).forEach(({id, title, price}) => {
-    if (offers.includes(id)) {
-      template += `
-            <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="${id}" type="checkbox" name="${title}" checked>
-              <label class="event__offer-label" for="${id}">
-                <span class="event__offer-title">${title}</span>
-                &plus;&euro;&nbsp;
-                <span class="event__offer-price">${price}</span>
-              </label>
-            </div>
-    `;
-    } else {
-      template += `
-            <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="${id}" type="checkbox" name="${title}">
-              <label class="event__offer-label" for="${id}">
-                <span class="event__offer-title">${title}</span>
-                &plus;&euro;&nbsp;
-                <span class="event__offer-price">${price}</span>
-              </label>
-            </div>
-    `;
+  const allOffers = Object.values(availableOffers);
+  allOffers.forEach(({type: pointType, offers: typeOffers}) => {
+    if (type === pointType) {
+      typeOffers.forEach(({id, title, price}) => {
+        const isChecked = (offers.includes(id))
+          ? 'checked'
+          : '';
+        template += `
+          <div class="event__offer-selector">
+            <input class="event__offer-checkbox  visually-hidden" id="${id}" type="checkbox" name="${title}" ${isChecked}>
+            <label class="event__offer-label" for="${id}">
+              <span class="event__offer-title">${title}</span>
+              &plus;&euro;&nbsp;
+              <span class="event__offer-price">${price}</span>
+            </label>
+          </div>
+        `;
+      });
     }
   });
   return (template) ? `
@@ -75,10 +67,9 @@ const createOffersTemplate = (offers) => {
     ` : '';
 };
 
-const createTypeImageTemplate = (currentType) => {
+const createTypeImageTemplate = (currentType, availableOffers) => {
   let template = '';
-  const allTypes = Object.keys(eventOffers);
-  allTypes.forEach((type) => {
+  Object.values(availableOffers).forEach(({type}) => {
     const checkedValue = (type === currentType) ? 'checked' : '';
     template += `
     <div class="event__type-item">
@@ -90,15 +81,15 @@ const createTypeImageTemplate = (currentType) => {
   return template;
 };
 
-const createDestinationListTemplate = () => {
+const createDestinationListTemplate = (availableDestinations) => {
   let template = '';
-  destinationNames.forEach((name) => {
-    template += `<option value="${name}"></option>`;
+  Object.values(availableDestinations).forEach((destination) => {
+    template += `<option value="${destination.name}"></option>`;
   });
   return template;
 };
 
-const createEventEditorTemplate = (data, isEventNew) => {
+const createEventEditorTemplate = (data, isEventNew, availableDestinations, availableOffers) => {
   const {dateFrom, dateTo, offers, type, destination, basePrice, isDestination} = data;
 
   const tripDateFrom = dateFrom !== null
@@ -110,14 +101,14 @@ const createEventEditorTemplate = (data, isEventNew) => {
     : 'No data';
 
   const destinationName = isDestination
-    ? destination.name
+    ? availableDestinations[destination - 1].name
     : '';
 
   const destinationTemplate = isDestination
-    ? createDestinationTemplate(destination)
+    ? createDestinationTemplate(destination, availableDestinations)
     : '';
 
-  const offersTemplate = createOffersTemplate(type, offers);
+  const offersTemplate = createOffersTemplate(type, offers, availableOffers);
 
   const buttonsTemplate = isEventNew
     ? `
@@ -131,68 +122,72 @@ const createEventEditorTemplate = (data, isEventNew) => {
       </button>`;
 
   return `
-<li class="trip-events__item">
-  <form class="event event--edit" action="#" method="post">
-    <header class="event__header">
-      <div class="event__type-wrapper">
-        <label class="event__type  event__type-btn" for="event-type-toggle-1">
-          <span class="visually-hidden">Choose event type</span>
-          <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
-        </label>
-        <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
+  <li class="trip-events__item">
+    <form class="event event--edit" action="#" method="post">
+      <header class="event__header">
+        <div class="event__type-wrapper">
+          <label class="event__type  event__type-btn" for="event-type-toggle-1">
+            <span class="visually-hidden">Choose event type</span>
+            <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
+          </label>
+          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
 
-        <div class="event__type-list">
-          <fieldset class="event__type-group">
-            <legend class="visually-hidden">Event type</legend>
-            ${createTypeImageTemplate(type)}
-          </fieldset>
+          <div class="event__type-list">
+            <fieldset class="event__type-group">
+              <legend class="visually-hidden">Event type</legend>
+              ${createTypeImageTemplate(type, availableOffers)}
+            </fieldset>
+          </div>
         </div>
-      </div>
 
-      <div class="event__field-group  event__field-group--destination">
-        <label class="event__label  event__type-output" for="event-destination-1">
-          ${type}
-        </label>
-        <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationName}" list="destination-list-1">
-        <datalist id="destination-list-1">
-          ${createDestinationListTemplate()}
-        </datalist>
-      </div>
+        <div class="event__field-group  event__field-group--destination">
+          <label class="event__label  event__type-output" for="event-destination-1">
+            ${type}
+          </label>
+          <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationName}" list="destination-list-1">
+          <datalist id="destination-list-1">
+            ${createDestinationListTemplate(availableDestinations)}
+          </datalist>
+        </div>
 
-      <div class="event__field-group  event__field-group--time">
-        <label class="visually-hidden" for="event-start-time-1">From</label>
-        <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${tripDateFrom}">
-        &mdash;
-        <label class="visually-hidden" for="event-end-time-1">To</label>
-        <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${tripDateTo}"">
-      </div>
+        <div class="event__field-group  event__field-group--time">
+          <label class="visually-hidden" for="event-start-time-1">From</label>
+          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${tripDateFrom}">
+          &mdash;
+          <label class="visually-hidden" for="event-end-time-1">To</label>
+          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${tripDateTo}"">
+        </div>
 
-      <div class="event__field-group  event__field-group--price">
-        <label class="event__label" for="event-price-1">
-          <span class="visually-hidden">Price</span>
-          &euro;
-        </label>
-        <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}" pattern="[0-9]*">
-      </div>
+        <div class="event__field-group  event__field-group--price">
+          <label class="event__label" for="event-price-1">
+            <span class="visually-hidden">Price</span>
+            &euro;
+          </label>
+          <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}" pattern="[0-9]*">
+        </div>
 
-      ${buttonsTemplate}
-    </header>
-    <section class="event__details">
-      ${offersTemplate}
-      ${destinationTemplate}
-    </section>
-  </form>
-</li>
-`;
+        ${buttonsTemplate}
+      </header>
+      <section class="event__details">
+        ${offersTemplate}
+        ${destinationTemplate}
+      </section>
+    </form>
+  </li>
+  `;
 };
 
-class AddEventForm extends AbstractStatefulView {
+export default class AddEventForm extends AbstractStatefulView {
   _state = null;
+  #availableDestinations = null;
+  #availableOffers = null;
   #datepicker = {};
   #isEventNew = false;
 
-  constructor(event = EVENT_TEMPLATE) {
+  constructor(destinations, offers, event = EVENT_TEMPLATE) {
     super();
+    this.#availableDestinations = destinations;
+    this.#availableOffers = offers;
     this.#isEventNew = (event === EVENT_TEMPLATE);
     this._state = AddEventForm.parseEventToState(event);
     this.#setInnerHandlers();
@@ -217,7 +212,7 @@ class AddEventForm extends AbstractStatefulView {
   };
 
   get template() {
-    return createEventEditorTemplate(this._state, this.#isEventNew);
+    return createEventEditorTemplate(this._state, this.#isEventNew, this.#availableDestinations, this.#availableOffers);
   }
 
   #setInnerHandlers = () => {
@@ -290,7 +285,7 @@ class AddEventForm extends AbstractStatefulView {
 
   #changePrice = (evt) => {
     evt.preventDefault();
-    const newPrice = event.target.value;
+    const newPrice =  Number(evt.target.value);
     this._setState({
       basePrice: newPrice,
     });
@@ -304,7 +299,7 @@ class AddEventForm extends AbstractStatefulView {
     const checkedIds = new Array();
 
     checkboxes.forEach((checkbox) => {
-      checkedIds.push(checkbox.id);
+      checkedIds.push(Number(checkbox.id));
     });
 
     this._setState({
@@ -314,10 +309,10 @@ class AddEventForm extends AbstractStatefulView {
 
   #changeDestination = (evt) => {
     evt.preventDefault();
-    const newDestinationName = event.target.value;
+    const newDestinationName = evt.target.value;
     let isNewDestination = false;
-    Object.values(DESTINATIONS).forEach((destination) => {
-      if (newDestinationName === destination.name) {
+    Object.values(this.#availableDestinations).forEach(({id: destination, name}) => {
+      if (newDestinationName === name) {
         isNewDestination = true;
         this.updateElement({
           destination,
@@ -353,7 +348,10 @@ class AddEventForm extends AbstractStatefulView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this._callback.formSubmit(AddEventForm.parseStateToEvent(this._state));
+    const newState = EventEditFormView.parseStateToEvent(this._state);
+    if (isFormValid(newState, this.#availableDestinations)) {
+      this._callback.formSubmit(newState);
+    }
   };
 
   setDeleteButtonClickListener = (callback) => {
@@ -400,5 +398,3 @@ class AddEventForm extends AbstractStatefulView {
     }
   };
 }
-
-export default AddEventForm;

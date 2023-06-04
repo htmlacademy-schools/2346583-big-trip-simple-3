@@ -19,11 +19,16 @@ export default class TripEventPresenter {
 
   #event = null;
   #mode = Mode.DEFAULT;
+  #availableDestinations = null;
+  #availableOffers = null;
 
-  constructor(container, changeData, changeMode) {
+
+  constructor(container, changeData, changeMode, destinations, offers) {
     this.#container = container;
     this.#changeData = changeData;
     this.#changeMode = changeMode;
+    this.#availableDestinations = destinations;
+    this.#availableOffers = offers;
   }
 
   init(event) {
