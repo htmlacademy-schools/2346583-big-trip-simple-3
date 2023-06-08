@@ -1,4 +1,4 @@
-import TripPresenter from './presenter/presenter.js';
+import TripPresenter from './presenter/trip-presenter.js';
 import TripModel from './model/trip-model.js';
 import FilterModel from './model/filter-model.js';
 import FilterPresenter from './presenter/filter-presenter.js';
